@@ -103,11 +103,11 @@ func (c Client) AuthRefresh(ctx context.Context, token string) (*Token, error) {
 }
 
 // FileToken retrieves a token to access a protected file.
-func (c Client) FileToken(ctx context.Context, params Params) (*Token, error) {
+func (c Client) FileToken(ctx context.Context, token string) (*Token, error) {
 	const path = "/api/files/token"
 
 	resp, err := httpw.Do(ctx, http.MethodPost, c.host+path,
-		httpw.WithHeader("Authorization", params.Token))
+		httpw.WithHeader("Authorization", token))
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (c Client) FileToken(ctx context.Context, params Params) (*Token, error) {
 	return parseToken(resp.Body)
 }
 
-// RecordSearch searches for records in a collection. SearchResults struct is recomemnded.
+// RecordSearch searches for records in a collection. SearchResults struct is recomemnded to be used as output.
 func (c Client) RecordSearch(ctx context.Context, params Params, output interface{}) error {
 	url := fmt.Sprintf("%s/api/collections/%s/records?%s", c.host, params.Collection, params.QueryString())
 
@@ -131,16 +131,14 @@ func (c Client) RecordSearch(ctx context.Context, params Params, output interfac
 		return err
 	}
 	defer resp.Body.Close()
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
+	defer io.Copy(io.Discard, resp.Body) //nolint:errcheck
 
 	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("status code %d: %s", resp.StatusCode, b)
 	}
 
-	if err := unmarshalPB(b, output); err != nil {
+	if err := unmarshalPB(resp.Body, output); err != nil {
 		return err
 	}
 
@@ -157,16 +155,14 @@ func (c Client) RecordView(ctx context.Context, params Params, output interface{
 		return err
 	}
 	defer resp.Body.Close()
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
+	defer io.Copy(io.Discard, resp.Body) //nolint:errcheck
 
 	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("status code %d: %s", resp.StatusCode, b)
 	}
 
-	if err := unmarshalPB(b, output); err != nil {
+	if err := unmarshalPB(resp.Body, output); err != nil {
 		return err
 	}
 
@@ -184,16 +180,14 @@ func (c Client) RecordCreate(ctx context.Context, params Params, output interfac
 		return err
 	}
 	defer resp.Body.Close()
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
+	defer io.Copy(io.Discard, resp.Body) //nolint:errcheck
 
 	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("status code %d: %s", resp.StatusCode, b)
 	}
 
-	if err := unmarshalPB(b, output); err != nil {
+	if err := unmarshalPB(resp.Body, output); err != nil {
 		return err
 	}
 
@@ -211,16 +205,14 @@ func (c Client) RecordUpdate(ctx context.Context, params Params, output interfac
 		return err
 	}
 	defer resp.Body.Close()
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
+	defer io.Copy(io.Discard, resp.Body) //nolint:errcheck
 
 	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("status code %d: %s", resp.StatusCode, b)
 	}
 
-	if err := unmarshalPB(b, output); err != nil {
+	if err := unmarshalPB(resp.Body, output); err != nil {
 		return err
 	}
 
@@ -237,26 +229,24 @@ func (c Client) RecordDelete(ctx context.Context, params Params) error {
 		return err
 	}
 	defer resp.Body.Close()
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
+	defer io.Copy(io.Discard, resp.Body) //nolint:errcheck
 
 	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("status code %d: %s", resp.StatusCode, b)
 	}
 
 	return nil
 }
 
-// GetFileURL retrieves a file URL.
+// GetFileURL retrieves a file URL. Protected files require a token.
 func (c Client) GetFileURL(ctx context.Context, params Params) string {
 	url := fmt.Sprintf("%s/api/files/%s/%s/%s", c.host, params.Collection, params.ID, params.FileName)
 	return url
 }
 
-// GetFile retrieves a file from a collection.
-func (c Client) GetFile(ctx context.Context, params Params) ([]byte, error) {
+// GetFileContent retrieves a file from a collection.
+func (c Client) GetFileContent(ctx context.Context, params Params) ([]byte, error) {
 	url := c.GetFileURL(ctx, params)
 	resp, err := httpw.Do(ctx, http.MethodGet, url,
 		httpw.WithParam("token", params.Token),
@@ -272,6 +262,7 @@ func (c Client) GetFile(ctx context.Context, params Params) ([]byte, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("status code %d: %s", resp.StatusCode, b)
 	}
 
@@ -279,7 +270,7 @@ func (c Client) GetFile(ctx context.Context, params Params) ([]byte, error) {
 }
 
 // unmarshalPB unmarshals output from a JSON byte slice.
-func unmarshalPB(data []byte, output interface{}) error {
+func unmarshalPB(r io.Reader, output interface{}) error {
 	if output == nil {
 		return nil
 	}
@@ -288,21 +279,16 @@ func unmarshalPB(data []byte, output interface{}) error {
 		return errors.New("output must be a pointer")
 	}
 
-	if err := json.Unmarshal(parseFromPB(data), output); err != nil {
+	if err := json.NewDecoder(r).Decode(output); err != nil {
 		return err
 	}
 	return nil
 }
 
 // parseToken parses a token from a JSON response.
-func parseToken(body io.Reader) (*Token, error) {
-	b, err := io.ReadAll(body)
-	if err != nil {
-		return nil, err
-	}
-
+func parseToken(r io.Reader) (*Token, error) {
 	t := Token{}
-	if err := unmarshalPB(b, &t); err != nil {
+	if err := unmarshalPB(r, &t); err != nil {
 		return nil, err
 	}
 
