@@ -53,9 +53,9 @@ type Token struct {
 	User       User      `json:"record"`
 }
 
-// IsExpired checks if a token is expired. A token are considered expired if the
-// expiration date is within 30 seconds.
+// IsExpired checks if a token is expired. A token is considered expired if the
+// expiration date is within 1 minute.
 func (s Token) IsExpired() bool {
-	limit := time.Now().Add(time.Second * -30)
+	limit := time.Now().Add(-time.Minute)
 	return s.Expiration.Before(limit)
 }
