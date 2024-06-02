@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gbrlmza/httpw"
+	"github.com/gbrlmza/hw"
 	"github.com/golang-jwt/jwt"
 )
 
@@ -45,7 +45,7 @@ func (c Client) AuthAdminWithPassword(ctx context.Context, identity string, pass
 		"identity": identity,
 		"password": password,
 	}
-	resp, err := httpw.Do(ctx, http.MethodPost, c.host+path, httpw.WithJsonBody(body))
+	resp, err := hw.Do(ctx, http.MethodPost, c.host+path, hw.WithJsonBody(body))
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (c Client) AuthUserWithPassword(ctx context.Context, identity string, passw
 		"identity": identity,
 		"password": password,
 	}
-	resp, err := httpw.Do(ctx, http.MethodPost, c.host+path, httpw.WithJsonBody(body))
+	resp, err := hw.Do(ctx, http.MethodPost, c.host+path, hw.WithJsonBody(body))
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (c Client) AuthUserWithPassword(ctx context.Context, identity string, passw
 func (c Client) AuthRefresh(ctx context.Context, token string) (*Token, error) {
 	const path = "/api/collections/users/auth-refresh"
 
-	resp, err := httpw.Do(ctx, http.MethodPost, c.host+path, httpw.WithHeader("Authorization", token))
+	resp, err := hw.Do(ctx, http.MethodPost, c.host+path, hw.WithHeader("Authorization", token))
 	if err != nil {
 		return nil, err
 	}
@@ -106,8 +106,8 @@ func (c Client) AuthRefresh(ctx context.Context, token string) (*Token, error) {
 func (c Client) FileToken(ctx context.Context, token string) (*Token, error) {
 	const path = "/api/files/token"
 
-	resp, err := httpw.Do(ctx, http.MethodPost, c.host+path,
-		httpw.WithHeader("Authorization", token))
+	resp, err := hw.Do(ctx, http.MethodPost, c.host+path,
+		hw.WithHeader("Authorization", token))
 	if err != nil {
 		return nil, err
 	}
@@ -125,8 +125,8 @@ func (c Client) FileToken(ctx context.Context, token string) (*Token, error) {
 func (c Client) RecordSearch(ctx context.Context, params Params, output interface{}) error {
 	url := fmt.Sprintf("%s/api/collections/%s/records?%s", c.host, params.Collection, params.QueryString())
 
-	resp, err := httpw.Do(ctx, http.MethodGet, url,
-		httpw.WithHeader("Authorization", params.Token))
+	resp, err := hw.Do(ctx, http.MethodGet, url,
+		hw.WithHeader("Authorization", params.Token))
 	if err != nil {
 		return err
 	}
@@ -149,8 +149,8 @@ func (c Client) RecordSearch(ctx context.Context, params Params, output interfac
 func (c Client) RecordView(ctx context.Context, params Params, output interface{}) error {
 	url := fmt.Sprintf("%s/api/collections/%s/records/%s?%s", c.host, params.Collection, params.ID, params.QueryString())
 
-	resp, err := httpw.Do(ctx, http.MethodGet, url,
-		httpw.WithHeader("Authorization", params.Token))
+	resp, err := hw.Do(ctx, http.MethodGet, url,
+		hw.WithHeader("Authorization", params.Token))
 	if err != nil {
 		return err
 	}
@@ -173,9 +173,9 @@ func (c Client) RecordView(ctx context.Context, params Params, output interface{
 func (c Client) RecordCreate(ctx context.Context, params Params, output interface{}) error {
 	url := fmt.Sprintf("%s/api/collections/%s/records?%s", c.host, params.Collection, params.QueryString())
 
-	resp, err := httpw.Do(ctx, http.MethodPost, url,
-		httpw.WithHeader("Authorization", params.Token),
-		httpw.WithJsonBody(params.Data))
+	resp, err := hw.Do(ctx, http.MethodPost, url,
+		hw.WithHeader("Authorization", params.Token),
+		hw.WithJsonBody(params.Data))
 	if err != nil {
 		return err
 	}
@@ -198,9 +198,9 @@ func (c Client) RecordCreate(ctx context.Context, params Params, output interfac
 func (c Client) RecordUpdate(ctx context.Context, params Params, output interface{}) error {
 	url := fmt.Sprintf("%s/api/collections/%s/records/%s?%s", c.host, params.Collection, params.ID, params.QueryString())
 
-	resp, err := httpw.Do(ctx, http.MethodPatch, url,
-		httpw.WithHeader("Authorization", params.Token),
-		httpw.WithJsonBody(params.Data))
+	resp, err := hw.Do(ctx, http.MethodPatch, url,
+		hw.WithHeader("Authorization", params.Token),
+		hw.WithJsonBody(params.Data))
 	if err != nil {
 		return err
 	}
@@ -223,8 +223,8 @@ func (c Client) RecordUpdate(ctx context.Context, params Params, output interfac
 func (c Client) RecordDelete(ctx context.Context, params Params) error {
 	url := fmt.Sprintf("%s/api/collections/%s/records/%s", c.host, params.Collection, params.ID)
 
-	resp, err := httpw.Do(ctx, http.MethodDelete, url,
-		httpw.WithHeader("Authorization", params.Token))
+	resp, err := hw.Do(ctx, http.MethodDelete, url,
+		hw.WithHeader("Authorization", params.Token))
 	if err != nil {
 		return err
 	}
@@ -248,9 +248,9 @@ func (c Client) GetFileURL(ctx context.Context, params Params) string {
 // GetFileContent retrieves a file from a collection.
 func (c Client) GetFileContent(ctx context.Context, params Params) ([]byte, error) {
 	url := c.GetFileURL(ctx, params)
-	resp, err := httpw.Do(ctx, http.MethodGet, url,
-		httpw.WithParam("token", params.Token),
-		httpw.WithParam("thumb", params.Thumb),
+	resp, err := hw.Do(ctx, http.MethodGet, url,
+		hw.WithParam("token", params.Token),
+		hw.WithParam("thumb", params.Thumb),
 	)
 	if err != nil {
 		return nil, err
