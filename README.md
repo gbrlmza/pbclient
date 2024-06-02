@@ -1,0 +1,2 @@
+# pbclient
+Pocketbase Go Client
