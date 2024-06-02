@@ -1,4 +1,4 @@
-github.com/gbrlmza/httpw v0.0.1 h1:ofnfcEbUV6doeUVBMhL9Reqn3jNi/YIaMcnEtZZZJjI=
-github.com/gbrlmza/httpw v0.0.1/go.mod h1:5A5aLq2fS1AW+qAQevDvQ4riC5z41CvreQZHt0AluHI=
+github.com/gbrlmza/httpw v0.1.2 h1:vDYL39Kjt6nFvbYxijq6CdHf7rMid2GKg2p4UuXZKkk=
+github.com/gbrlmza/httpw v0.1.2/go.mod h1:WbNtFp1R+L5C/Z/quV+y+bbiCEErSXRgWrN0h2Dd538=
 github.com/golang-jwt/jwt v3.2.2+incompatible h1:IfV12K8xAKAnZqdXVzCZ+TOjboZ2keLg81eXfW3O+oY=
 github.com/golang-jwt/jwt v3.2.2+incompatible/go.mod h1:8pz2t5EyA70fFQQSrl6XZXzqecmYZeUEB8OUGHkxJ+I=
